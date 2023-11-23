@@ -1,8 +1,11 @@
 Basic inputs to consider:
 - Consider n asteroids:
-  - collision time (how long it takes for an asteroid to hit ship) - CZ
-  - angle to evade the nearest asteroid (no asteroid in that trajectory) -JP
-  - theta (angle for bullet to hit smallest asteroid) -YL
-  - size of the asteroid -YL
+  - collision time (how long it takes for an asteroid to hit ship) - CZ (3 mf)
+  - angle to evade the nearest asteroid (no asteroid in that trajectory) -JP (5 mf)
+  - theta (angle for bullet to hit smallest asteroid) -YL (5 mf)
+    - size of the asteroid -YL
       - Rules: hit biggest one last, shoot smallest ones first
 
+['l', 'h'] (2mf)
+['l', 'm', 'h'] (3mf)
+['l', 'ml', 'm', 'mh', 'h'] (5mf)
