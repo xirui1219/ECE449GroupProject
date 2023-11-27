@@ -1,0 +1,17 @@
+bullet angle: M -> fire H
+bullet angle: ~M -> fire L
+
+collision time L:
+evade angle L/H -> thrust L, turn M
+evade angle ML/MH -> thrust MH, turn ML/MH
+evade M -> thrust H, turn M
+
+collision time M:
+evade angle L/H -> thrust ML, turn M
+evade angle ML/MH -> thrust M, turn ML/MH
+evade M -> thrust MH, turn M
+
+collision time H:
+bullet angle L/H -> thrust M, turn L/H
+bullet angle ML/MH -> thrust H, turn ML/MH
+bullet angle M -> thrust H, turn M
