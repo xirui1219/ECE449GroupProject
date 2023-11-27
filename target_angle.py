@@ -49,18 +49,18 @@ def smallest_asteroid (closest_3_asteroid):
     for asteroid_dict in closest_3_asteroid:
         # Does not yet exist, so initialize first asteroid as the closest.
         if smallest_asteroid is None:
-            smallest_asteroid = asteroid_dict["aster"]
+            smallest_asteroid = asteroid_dict
 
         # candidate with samller size
-        if asteroid_dict["aster"]["size"] < smallest_asteroid["size"]:
-            smallest_asteroid = asteroid_dict["aster"]
+        if asteroid_dict["aster"]["size"] < smallest_asteroid["aster"]["size"]:
+            smallest_asteroid = asteroid_dict
         # candidate with same size but closer to ship
-        elif asteroid_dict["aster"]["size"] == smallest_asteroid["size"]:
-            if asteroid_dict["aster"]["dist"] < smallest_asteroid["dist"]:
-                smallest_asteroid = asteroid_dict["aster"]
+        elif asteroid_dict["aster"]["size"] == smallest_asteroid["aster"]["size"]:
+            if asteroid_dict["dist"] < smallest_asteroid["dist"]:
+                smallest_asteroid = asteroid_dict
 
-    return smallest_asteroid
+    return smallest_asteroid["aster"]
 
 # method for estimate angle of target
 def target_angle (ship_state, target_asteroid):
-    
+    return
