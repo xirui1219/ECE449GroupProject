@@ -13,15 +13,24 @@ class FSController(KesslerController):
 
         angle_rng = np.arange(-180, 180, 0.01)
         thrust_rng = np.arange(-480, 480, 0.01)
-        time_rng = np.arange(0, 4, 0.01)
+        thrust_target_rng = np.arange(-240, 240, 0.01)
+        time_rng = np.arange(0, 3, 0.01)
         bool_rng = np.arange(-1, 1, 0.01)
 
-        bullet_delta = ctrl.Antecedent(angle_rng, 'bullet_delta')
-        evade_delta = ctrl.Antecedent(angle_rng, 'evade_delta')
+        # determinant
         collision_time = ctrl.Antecedent(time_rng, 'collision_time')
-        thrust = ctrl.Consequent(thrust_rng, 'thrust')
-        turn_rate = ctrl.Consequent(angle_rng, 'turn_rate')
-        fire = ctrl.Consequent(bool_rng, 'fire')
+        is_threat = ctrl.Consequent(bool_rng, 'is_threat')
+
+        # evade system
+        evade_delta = ctrl.Antecedent(angle_rng, 'evade_delta')
+        thrust_evade = ctrl.Consequent(thrust_rng, 'thrust')
+        turn_rate_evade = ctrl.Consequent(angle_rng, 'turn_rate')
+
+        # target system
+        bullet_delta = ctrl.Antecedent(angle_rng, 'bullet_delta')
+        thrust_target = ctrl.Consequent(thrust_target_rng, 'thrust')
+        turn_rate_target = ctrl.Consequent(angle_rng, 'turn_rate')
+        fire_target = ctrl.Consequent(bool_rng, 'fire')
 
         # 3 peaks
         def mf_5(var, peaks, min_val, max_val):
@@ -45,44 +54,42 @@ class FSController(KesslerController):
             var['H'] = trimf(var.universe, [min_val, max_val, max_val])
 
         # assigning membership
+        mf_3(collision_time, 1.5, 0, 3)
         mf_5(bullet_delta, [-90, 0, 90], -180, 180)
         mf_5(evade_delta, [-90, 0, 90], -180, 180)
-        mf_3(collision_time, 2, 0, 4)
-        mf_5(thrust, [-240, 0, 240], -480, 480)
-        mf_5(turn_rate, [-90, 0, 90], -180, 180)
-        mf_2(fire, -1, 1)
+        mf_5(thrust_evade, [-240, 0, 240], -480, 480)
+        mf_5(turn_rate_evade, [-90, 0, 90], -180, 180)
+        mf_5(thrust_target, [-120, 0, 120], -240, 240)
+        mf_5(turn_rate_target, [-90, 0, 90], -180, 180)
+        mf_2(is_threat, -1, 1)
+        mf_2(fire_target, -1, 1)
 
         # rules
-        rules = [
-            ctrl.Rule(bullet_delta['M'], fire['H']),
-            ctrl.Rule(~bullet_delta['M'], fire['L']),
+        rules_is_threat = [
+            ctrl.Rule(collision_time['L'], is_threat['H']),
+            ctrl.Rule(collision_time['M'], is_threat['L']),
+            ctrl.Rule(collision_time['H'], is_threat['L']),
+        ]
 
-            ctrl.Rule(collision_time['L'] & evade_delta['H'], (thrust ['L'], turn_rate['H'])),
-            ctrl.Rule(collision_time['L'] & evade_delta['L'], (thrust ['L'], turn_rate['L'])),
-            ctrl.Rule(collision_time['L'] & evade_delta['ML'], (thrust ['MH'], turn_rate['ML'])),
-            ctrl.Rule(collision_time['L'] & evade_delta['MH'], (thrust ['MH'], turn_rate['MH'])),
-            ctrl.Rule(collision_time['L'] & evade_delta['M'], (thrust ['H'], turn_rate['M'])),    
-            
-            # ctrl.Rule(collision_time['M'] & evade_delta['H'], (thrust ['ML'], turn_rate['M'])),
-            # ctrl.Rule(collision_time['M'] & evade_delta['L'], (thrust ['ML'], turn_rate['M'])),
-            # ctrl.Rule(collision_time['M'] & evade_delta['ML'], (thrust ['M'], turn_rate['ML'])),
-            # ctrl.Rule(collision_time['M'] & evade_delta['MH'], (thrust ['M'], turn_rate['MH'])),
-            # ctrl.Rule(collision_time['M'] & evade_delta['M'], (thrust ['MH'], turn_rate['M'])),
+        rules_evade = [
+            ctrl.Rule(evade_delta['H'], (thrust_evade['H'], turn_rate_evade['M'])),
+            ctrl.Rule(evade_delta['L'], (thrust_evade['H'], turn_rate_evade['M'])),
+            ctrl.Rule(evade_delta['ML'], (thrust_evade['MH'], turn_rate_evade['MH'])),
+            ctrl.Rule(evade_delta['MH'], (thrust_evade['MH'], turn_rate_evade['ML'])),
+            ctrl.Rule(evade_delta['M'], (thrust_evade['L'], turn_rate_evade['M'])),    
+        ]
 
-            ctrl.Rule(collision_time['M'] & bullet_delta['H'], (thrust ['ML'], turn_rate['H'])),
-            ctrl.Rule(collision_time['M'] & bullet_delta['L'], (thrust ['ML'], turn_rate['L'])),
-            ctrl.Rule(collision_time['M'] & bullet_delta['ML'], (thrust ['MH'], turn_rate['ML'])),
-            ctrl.Rule(collision_time['M'] & bullet_delta['MH'], (thrust ['MH'], turn_rate['MH'])),
-            ctrl.Rule(collision_time['M'] & bullet_delta['M'], (thrust ['MH'], turn_rate['M'])),
+        rules_target = [
+            ctrl.Rule(bullet_delta['H'], (thrust_target['M'], turn_rate_target['H'], fire_target['L'])),
+            ctrl.Rule(bullet_delta['L'], (thrust_target['M'], turn_rate_target['L'], fire_target['L'])),
+            ctrl.Rule(bullet_delta['ML'], (thrust_target['MH'], turn_rate_target['ML'], fire_target['L'])),
+            ctrl.Rule(bullet_delta['MH'], (thrust_target['MH'], turn_rate_target['MH'], fire_target['L'])),
+            ctrl.Rule(bullet_delta['M'], (thrust_target['H'], turn_rate_target['M'], fire_target['H'])),
+        ]
 
-            ctrl.Rule(collision_time['H'] & bullet_delta['H'], (thrust ['ML'], turn_rate['H'])),
-            ctrl.Rule(collision_time['H'] & bullet_delta['L'], (thrust ['ML'], turn_rate['L'])),
-            ctrl.Rule(collision_time['H'] & bullet_delta['ML'], (thrust ['H'], turn_rate['ML'])),
-            ctrl.Rule(collision_time['H'] & bullet_delta['MH'], (thrust ['H'], turn_rate['MH'])),
-            ctrl.Rule(collision_time['H'] & bullet_delta['M'], (thrust ['H'], turn_rate['M'])),
-    ]
-
-        self.control = ctrl.ControlSystem(rules)
+        self.is_threat_control = ctrl.ControlSystem(rules_is_threat)
+        self.evade_control = ctrl.ControlSystem(rules_evade)
+        self.target_control = ctrl.ControlSystem(rules_target)
 
     def actions(self, ship_state: Dict, game_state: Dict) -> Tuple[float, float, bool]:
         """
@@ -94,38 +101,53 @@ class FSController(KesslerController):
             return sqrt((rel_ax) ** 2 + (rel_ay) ** 2)
 
         n_closest = sorted(game_state['asteroids'], key=dist)[:3]
-        ca = self.clear_angle(ship_state, game_state['map_size'], n_closest[:2])
 
-        coll_time = self.calculateCollTime(ship_state,game_state, n_closest)
+        coll_time, a = self.calculateCollTime_a(ship_state,game_state, n_closest)
+        a_angle = self.ast_delta(ship_state, a['position'], game_state['map_size'])
         dict = self.closest_asteroid(ship_state, game_state)
         aster = self.smallest_asteroid(dict)
         target_angle = self.target_angle(ship_state, aster)
 
-        print(target_angle)
-        
-        sim = ctrl.ControlSystemSimulation(self.control, flush_after_run=1)
-        sim.inputs({
-            'bullet_delta': target_angle,
-            'evade_delta': ca,
-            'collision_time': coll_time,
-        })
+        sim = ctrl.ControlSystemSimulation(self.is_threat_control, flush_after_run=1)
+        sim.input['collision_time'] = coll_time
+        sim.compute()
+        is_threat = sim.output['is_threat'] >= 0
+
+        control = None
+        inputs = {}
+
+        if is_threat:
+            control = self.evade_control
+            inputs = {
+                'evade_delta': a_angle,
+            }
+        else:
+            control = self.target_control
+            inputs = {
+                'bullet_delta': target_angle,
+            }
+        sim = ctrl.ControlSystemSimulation(control, flush_after_run=1)
+        sim.inputs(inputs)
         
         sim.compute()
 
         thrust = sim.output['thrust']
         turn_rate = sim.output['turn_rate']
-        fire = sim.output['fire'] >= 0
+        fire = sim.output['fire'] >= 0 if not is_threat else False
+        # print(f"CA: {ca}, TA: {target_angle}, CT: {coll_time} -> thrust: {thrust}, turn_rate: {turn_rate}, fire: {fire}")
 
         self.eval_frames +=1
 
         return thrust, turn_rate, fire
     
-    def calculateCollTime(self, ship_state, game_state, n_closest):
+    def calculateCollTime_a(self, ship_state, game_state, n_closest):
         def dist(ast):
             rel_ax, rel_ay = self.rel_asteroid_pos(ship_state['position'], ast['position'], game_state['map_size'])
             return sqrt((rel_ax) ** 2 + (rel_ay) ** 2)
+        
+        min_time = math.inf
+        min_a = None
 
-        coll_time_array = []
         for a in n_closest:
             # return the distance to asteroid
             # get velocity
@@ -133,9 +155,11 @@ class FSController(KesslerController):
             distance = dist(a)
             rel_vel = self.asteroid_vel(ship_state['velocity'], a['velocity'])
             coll_time = abs(distance / rel_vel)
-            coll_time_array.append(coll_time)
-        coll_time_array.sort()
-        return coll_time_array[0]
+            if coll_time < min_time:
+                min_time = coll_time
+                min_a = a
+        
+        return min_time, min_a
 
     def closest_asteroid(self, ship_state, game_state):
 
@@ -308,6 +332,16 @@ class FSController(KesslerController):
 
         return delta
     
+    def ast_delta(self, ship_state, a_pos, map_size):
+        rel_ax, rel_ay = self.rel_asteroid_pos(ship_state["position"], a_pos, map_size)
+        angle = (360 + atan2(rel_ay, rel_ax) * 180 / pi) % 360
+
+        delta = angle - ship_state["heading"]
+        if delta > 180:
+            delta -= 360
+
+        return delta
+
     @property
     def name(self) -> str:
         return "FSController"

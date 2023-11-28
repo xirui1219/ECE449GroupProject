@@ -5,27 +5,20 @@
 
 import time
 
-from kesslergame import Scenario, KesslerGame, GraphicsType
+from kesslergame import Scenario, KesslerGame, GraphicsType, TrainerEnvironment
 from controller import FSController
 from test_controller import TestController
 from graphics_both import GraphicsBoth
 from random import randint
 
 my_test_scenario = Scenario(name='Test Scenario',
-                            asteroid_states=[
-                                { 
-                                    'position': (randint(0, 1000), randint(0, 800)),
-                                    'speed': 0.01,
-                                    'angle': 0,
-                                    'size': randint(2, 4) 
-                                } for x in range(10)
-                            ],
+                            num_asteroids=10,
                             ship_states=[
                                 {'position': (400, 400), 'angle': 90, 'lives': 99, 'team': 1},
                                 # {'position': (400, 600), 'angle': 90, 'lives': 99, 'team': 2},
                             ],
                             map_size=(1000, 800),
-                            time_limit=60,
+                            time_limit=10,
                             ammo_limit_multiplier=0,
                             stop_if_no_ammo=False)
 
