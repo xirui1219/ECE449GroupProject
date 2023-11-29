@@ -74,8 +74,8 @@ class FSController(KesslerController):
         rules_evade = [
             ctrl.Rule(evade_delta['H'], (thrust_evade['MH'], turn_rate_evade['M'])),
             ctrl.Rule(evade_delta['L'], (thrust_evade['MH'], turn_rate_evade['M'])),
-            ctrl.Rule(evade_delta['ML'], (thrust_evade['MH'], turn_rate_evade['H'])),
-            ctrl.Rule(evade_delta['MH'], (thrust_evade['MH'], turn_rate_evade['L'])),
+            ctrl.Rule(evade_delta['ML'], (thrust_evade['ML'], turn_rate_evade['L'])),
+            ctrl.Rule(evade_delta['MH'], (thrust_evade['ML'], turn_rate_evade['H'])),
             ctrl.Rule(evade_delta['M'], (thrust_evade['L'], turn_rate_evade['M'])),    
         ]
 
