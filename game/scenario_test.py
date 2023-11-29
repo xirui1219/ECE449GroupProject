@@ -18,7 +18,7 @@ my_test_scenario = Scenario(name='Test Scenario',
                                 # {'position': (400, 600), 'angle': 90, 'lives': 99, 'team': 2},
                             ],
                             map_size=(1000, 800),
-                            time_limit=10,
+                            time_limit=30,
                             ammo_limit_multiplier=0,
                             stop_if_no_ammo=False)
 

@@ -58,33 +58,33 @@ class FSController(KesslerController):
         mf_5(bullet_delta, [-90, 0, 90], -180, 180)
         mf_5(evade_delta, [-90, 0, 90], -180, 180)
         mf_5(thrust_evade, [-240, 0, 240], -480, 480)
-        mf_5(turn_rate_evade, [-90, 0, 90], -180, 180)
+        mf_5(turn_rate_evade, [-30, 0, 30], -180, 180)
         mf_5(thrust_target, [-120, 0, 120], -240, 240)
-        mf_5(turn_rate_target, [-90, 0, 90], -180, 180)
+        mf_5(turn_rate_target, [-10, 0, 10], -180, 180)
         mf_2(is_threat, -1, 1)
         mf_2(fire_target, -1, 1)
 
         # rules
         rules_is_threat = [
             ctrl.Rule(collision_time['L'], is_threat['H']),
-            ctrl.Rule(collision_time['M'], is_threat['L']),
+            ctrl.Rule(collision_time['M'], is_threat['H']),
             ctrl.Rule(collision_time['H'], is_threat['L']),
         ]
 
         rules_evade = [
-            ctrl.Rule(evade_delta['H'], (thrust_evade['H'], turn_rate_evade['M'])),
-            ctrl.Rule(evade_delta['L'], (thrust_evade['H'], turn_rate_evade['M'])),
-            ctrl.Rule(evade_delta['ML'], (thrust_evade['MH'], turn_rate_evade['MH'])),
-            ctrl.Rule(evade_delta['MH'], (thrust_evade['MH'], turn_rate_evade['ML'])),
+            ctrl.Rule(evade_delta['H'], (thrust_evade['MH'], turn_rate_evade['M'])),
+            ctrl.Rule(evade_delta['L'], (thrust_evade['MH'], turn_rate_evade['M'])),
+            ctrl.Rule(evade_delta['ML'], (thrust_evade['MH'], turn_rate_evade['H'])),
+            ctrl.Rule(evade_delta['MH'], (thrust_evade['MH'], turn_rate_evade['L'])),
             ctrl.Rule(evade_delta['M'], (thrust_evade['L'], turn_rate_evade['M'])),    
         ]
 
         rules_target = [
             ctrl.Rule(bullet_delta['H'], (thrust_target['M'], turn_rate_target['H'], fire_target['L'])),
             ctrl.Rule(bullet_delta['L'], (thrust_target['M'], turn_rate_target['L'], fire_target['L'])),
-            ctrl.Rule(bullet_delta['ML'], (thrust_target['MH'], turn_rate_target['ML'], fire_target['L'])),
-            ctrl.Rule(bullet_delta['MH'], (thrust_target['MH'], turn_rate_target['MH'], fire_target['L'])),
-            ctrl.Rule(bullet_delta['M'], (thrust_target['H'], turn_rate_target['M'], fire_target['H'])),
+            ctrl.Rule(bullet_delta['ML'], (thrust_target['MH'], turn_rate_target['L'], fire_target['L'])),
+            ctrl.Rule(bullet_delta['MH'], (thrust_target['MH'], turn_rate_target['H'], fire_target['L'])),
+            ctrl.Rule(bullet_delta['M'], (thrust_target['MH'], turn_rate_target['M'], fire_target['H'])),
         ]
 
         self.is_threat_control = ctrl.ControlSystem(rules_is_threat)
@@ -102,16 +102,20 @@ class FSController(KesslerController):
 
         n_closest = sorted(game_state['asteroids'], key=dist)[:3]
 
-        coll_time, a = self.calculateCollTime_a(ship_state,game_state, n_closest)
-        a_angle = self.ast_delta(ship_state, a['position'], game_state['map_size'])
+        # coll_time, a = self.calculateCollTime_a(ship_state,game_state, n_closest)
+        # a_angle = self.ast_delta(ship_state, a['position'], game_state['map_size'])
         dict = self.closest_asteroid(ship_state, game_state)
         aster = self.smallest_asteroid(dict)
         target_angle = self.target_angle(ship_state, aster)
 
-        sim = ctrl.ControlSystemSimulation(self.is_threat_control, flush_after_run=1)
-        sim.input['collision_time'] = coll_time
-        sim.compute()
-        is_threat = sim.output['is_threat'] >= 0
+        # coll_time = dist(a)/60
+        coll_time = dict[0]['dist']/40
+        a_angle = self.ast_delta(ship_state, dict[0]['aster']['position'], game_state['map_size'])
+
+        sim2 = ctrl.ControlSystemSimulation(self.is_threat_control, flush_after_run=1)
+        sim2.input['collision_time'] = coll_time
+        sim2.compute()
+        is_threat = sim2.output['is_threat'] >= 0
 
         control = None
         inputs = {}
@@ -135,6 +139,7 @@ class FSController(KesslerController):
         turn_rate = sim.output['turn_rate']
         fire = sim.output['fire'] >= 0 if not is_threat else False
         # print(f"CA: {ca}, TA: {target_angle}, CT: {coll_time} -> thrust: {thrust}, turn_rate: {turn_rate}, fire: {fire}")
+        print (is_threat, coll_time, sim2.output['is_threat'])
 
         self.eval_frames +=1
 
