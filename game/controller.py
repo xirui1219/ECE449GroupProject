@@ -4,11 +4,9 @@ from skfuzzy import control as ctrl
 from skfuzzy import trimf
 import numpy as np
 import math
-from math import sqrt
-from math import atan2, pi
 
 class FSController(KesslerController):
-    def __init__(self):
+    def __init__(self, chromosome):
         self.eval_frames = 0
 
         angle_rng = np.arange(-180, 180, 0.01)
@@ -49,15 +47,25 @@ class FSController(KesslerController):
             var['H'] = trimf(var.universe, [min_val, max_val, max_val])
 
         # assigning membership
-        angle_peaks = [-30, 0, 30]
-        turn_peaks = [-10, 0, 10]
-        thrust_peaks = [-240, 0, 240]
+        closest_dist_genes, [bullet_delta_gene, evade_delta_gene, thrust_gene, turn_rate_gene] = chromosome[:3], chromosome[3:]
 
-        mf_5(closest_dist, [90, 200, 300], 0, 500)
-        mf_5(bullet_delta, angle_peaks, -180, 180)
-        mf_5(evade_delta, angle_peaks, -180, 180)
-        mf_5(thrust, thrust_peaks, -480, 480)
-        mf_5(turn_rate, turn_peaks, -200, 200)
+        closest_dist_peaks = [
+            self.gene_convert(closest_dist_genes[0], 70, 100),
+            self.gene_convert(closest_dist_genes[1], 100, 200),
+            self.gene_convert(closest_dist_genes[2], 250, 350),
+        ]
+        bullet_delta_peak = self.gene_convert(bullet_delta_gene, 5, 10)
+        evade_delta_peak = self.gene_convert(evade_delta_gene, 80, 100)
+        turn_rate_peak = self.gene_convert(turn_rate_gene, 100, 150)
+        thrust_peak = self.gene_convert(thrust_gene, 200, 280)
+
+        self.threat_dist = closest_dist_peaks[0]
+        
+        mf_5(closest_dist, closest_dist_peaks, 0, 500)
+        mf_5(bullet_delta, [-bullet_delta_peak, 0, bullet_delta_peak], -180, 180)
+        mf_5(evade_delta, [-evade_delta_peak, 0, evade_delta_peak], -180, 180)
+        mf_5(thrust, [-thrust_peak, 0, thrust_peak], -480, 480)
+        mf_5(turn_rate, [-turn_rate_peak, 0, turn_rate_peak], -200, 200)
         mf_2(fire, -1, 1)
 
         # rules
@@ -96,6 +104,10 @@ class FSController(KesslerController):
         self.evade_control = ctrl.ControlSystem(rules_evade)
         self.target_control = ctrl.ControlSystem(rules_target)
 
+    # convert gene [0, 1] to [min_val, max_val]
+    def gene_convert(self, gene, min_val, max_val):
+        return min_val + (max_val - min_val) * gene.value
+    
     def actions(self, ship_state: Dict, game_state: Dict) -> Tuple[float, float, bool]:
         """
         Method processed each time step by this controller.
@@ -236,7 +248,7 @@ class FSController(KesslerController):
     
     def ast_delta(self, ship_state, a_pos, map_size):
         rel_ax, rel_ay = self.rel_asteroid_pos(ship_state["position"], a_pos, map_size)
-        angle = (360 + atan2(rel_ay, rel_ax) * 180 / pi) % 360
+        angle = (360 + math.atan2(rel_ay, rel_ax) * 180 / math.pi) % 360
 
         delta = angle - ship_state["heading"]
         if delta > 180:
