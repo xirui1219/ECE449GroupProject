@@ -1,10 +1,10 @@
-from test_controller_evade import *
+
 import random
 import EasyGA
 import time
 
-from src.kesslergame import Scenario, KesslerGame, GraphicsType, TrainerEnvironment
-from test_controller_evade import FSController
+from kesslergame import Scenario, KesslerGame, GraphicsType, TrainerEnvironment
+from controller import FSController
 
 def setup_GA():
     train_ga = EasyGA.GA()
