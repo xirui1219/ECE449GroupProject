@@ -12,13 +12,13 @@ from graphics_both import GraphicsBoth
 from random import randint
 
 my_test_scenario = Scenario(name='Test Scenario',
-                            num_asteroids=10,
+                            num_asteroids=30,
                             ship_states=[
                                 {'position': (400, 400), 'angle': 90, 'lives': 99, 'team': 1},
                                 # {'position': (400, 600), 'angle': 90, 'lives': 99, 'team': 2},
                             ],
                             map_size=(1000, 800),
-                            time_limit=10,
+                            time_limit=60,
                             ammo_limit_multiplier=0,
                             stop_if_no_ammo=False)
 
