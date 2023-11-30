@@ -5,8 +5,14 @@ from skfuzzy import trimf
 import numpy as np
 import math
 
+from EasyGA import GA
+
 class FSController(KesslerController):
-    def __init__(self, chromosome):
+    def __init__(self, chromosome = None):
+        
+        if chromosome is None:
+            chromosome = GA().make_chromosome([0.5]*7)
+
         self.eval_frames = 0
 
         angle_rng = np.arange(-180, 180, 0.01)
