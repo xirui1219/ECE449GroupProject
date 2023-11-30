@@ -60,7 +60,7 @@ class FSController(KesslerController):
         thrust_peak = self.gene_convert(thrust_gene, 200, 280)
 
         self.threat_dist = closest_dist_peaks[0]
-        
+
         mf_5(closest_dist, closest_dist_peaks, 0, 500)
         mf_5(bullet_delta, [-bullet_delta_peak, 0, bullet_delta_peak], -180, 180)
         mf_5(evade_delta, [-evade_delta_peak, 0, evade_delta_peak], -180, 180)
@@ -116,7 +116,7 @@ class FSController(KesslerController):
         [a_closest_wrapped] = self.get_closest_n_asteroids(ship_state, game_state, 1, True)
         closest_dist = a_closest_wrapped['dist']
 
-        is_threat = closest_dist <= 90
+        is_threat = closest_dist <= self.threat_dist
 
         control = None
         inputs = {}
