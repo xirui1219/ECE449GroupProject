@@ -11,7 +11,7 @@ class FSController(KesslerController):
     def __init__(self, chromosome = None):
         
         if chromosome is None:
-            chromosome = GA().make_chromosome([0.5]*7)
+            chromosome = GA().make_chromosome([0.8281900502687928, 0.4425178006139453, 0.40288489026790153, 0.17543136569574647, 0.7512487108722598, 0.4679469881583741, 0.4952406577768368])
 
         self.eval_frames = 0
 
@@ -80,7 +80,7 @@ class FSController(KesslerController):
             ctrl.Rule(~evade_delta['M'], fire['L']),
 
             ctrl.Rule((evade_delta['H'] | evade_delta['L']), thrust['MH']),
-            ctrl.Rule((evade_delta['MH'] | evade_delta['ML']), thrust['ML']),
+            ctrl.Rule((evade_delta['MH'] | evade_delta['ML']), thrust['L']),
             ctrl.Rule(evade_delta['M'], thrust['ML']),
             
             ctrl.Rule(evade_delta['L'], turn_rate['H']),

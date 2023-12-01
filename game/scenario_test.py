@@ -6,16 +6,16 @@
 import time
 
 from kesslergame import Scenario, KesslerGame, GraphicsType, TrainerEnvironment
-from controller import FSController
+from controller_group4 import FSController
 from test_controller import TestController
 from graphics_both import GraphicsBoth
 from random import randint
 
 my_test_scenario = Scenario(name='Test Scenario',
-                            num_asteroids=30,
+                            num_asteroids=10,
                             ship_states=[
-                                {'position': (400, 400), 'angle': 90, 'lives': 99, 'team': 1},
-                                # {'position': (400, 600), 'angle': 90, 'lives': 99, 'team': 2},
+                                {'position': (400, 400), 'angle': 90, 'lives': 3, 'team': 1},
+                                {'position': (400, 600), 'angle': 90, 'lives': 3, 'team': 2},
                             ],
                             map_size=(1000, 800),
                             time_limit=60,

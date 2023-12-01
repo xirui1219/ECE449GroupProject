@@ -11,10 +11,14 @@ def setup_GA():
     train_ga.gene_impl = lambda: generate_gene()
     train_ga.chromosome_length = 7  # num of antecedents
     train_ga.population_size = 50
-    train_ga.target_fitness_type = 'min'
-    train_ga.generation_goal = 1
+    train_ga.target_fitness_type = 'max'
+    train_ga.generation_goal = 10
     train_ga.fitness_function_impl = fitness
     train_ga.evolve()
+
+    # Print out the current generation and the population
+    train_ga.print_generation()
+    train_ga.print_population()
 
     train_ga.sort_by_best_fitness()
     best_chromosome = train_ga.population[0]
@@ -28,7 +32,7 @@ def fitness(chromosome):
                                     {'position': (400, 400), 'angle': 90, 'lives': 3, 'team': 1}
                                 ],
                                 map_size=(1000, 800),
-                                time_limit=10,
+                            time_limit=30,
                                 ammo_limit_multiplier=0,
                                 stop_if_no_ammo=False)
 
@@ -44,8 +48,8 @@ def fitness(chromosome):
     deaths = team.deaths
     accuracy = team.accuracy
 
-    final_score = asteroids_hit * accuracy - deaths*100
-    print(final_score)
+    final_score = asteroids_hit * accuracy - deaths*50
+    print(final_score, chromosome)
 
     return final_score
 
