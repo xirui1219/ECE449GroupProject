@@ -1,12 +1,11 @@
 
 import random
 import EasyGA
-import time
 
-from kesslergame import Scenario, KesslerGame, GraphicsType, TrainerEnvironment
+from kesslergame import Scenario, GraphicsType, TrainerEnvironment
 from controller import FSController
 
-def setup_GA():
+def train_GA():
     train_ga = EasyGA.GA()
     train_ga.gene_impl = lambda: generate_gene()
     train_ga.chromosome_length = 7  # num of antecedents
@@ -56,5 +55,7 @@ def fitness(chromosome):
 def generate_gene():
     return random.random()
 
-if __name__ == "__main__":
-    setup_GA()
+# returns the controller that is optimised by GA.
+def get_GA_controller():
+    best_chromosome = train_GA()
+    return FSController(best_chromosome)
