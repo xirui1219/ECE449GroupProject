@@ -7,11 +7,14 @@ import math
 
 from EasyGA import GA
 
+# Controller will use a GA chromosome if provided, else use a hard-coded GA value.
+# For convenience, we have inserted the best chromosome found from our training:
+# [0.12467835912790237, 0.6585295075987507, 0.10956233934658344, 0.6257074740697369, 0.3136768180499757, 0.6664552106000395, 0.7702516639022675]
+
 class FSController(KesslerController):
     def __init__(self, chromosome = None):
-        
         if chromosome is None:
-            chromosome = GA().make_chromosome([0.8281900502687928, 0.4425178006139453, 0.40288489026790153, 0.17543136569574647, 0.7512487108722598, 0.4679469881583741, 0.4952406577768368])
+            chromosome = GA().make_chromosome([0.12467835912790237, 0.6585295075987507, 0.10956233934658344, 0.6257074740697369, 0.3136768180499757, 0.6664552106000395, 0.7702516639022675])
 
         self.eval_frames = 0
 
@@ -42,11 +45,6 @@ class FSController(KesslerController):
                 top = peaks[i + 1] if i < len(peaks) - 1 else max_val
                 var[l] = trimf(var.universe, [prev, peaks[i], top])
                 prev = peaks[i]
-        
-        def mf_3(var, peak, min_val, max_val):
-            var['L'] = trimf(var.universe, [min_val, min_val, peak])
-            var['M'] = trimf(var.universe, [min_val, peak, max_val])
-            var['H'] = trimf(var.universe, [peak, max_val, max_val])
         
         def mf_2(var, min_val, max_val):
             var['L'] = trimf(var.universe, [min_val, min_val, max_val])
@@ -122,13 +120,17 @@ class FSController(KesslerController):
         [a_closest_wrapped] = self.get_closest_n_asteroids(ship_state, game_state, 1, True)
         closest_dist = a_closest_wrapped['dist']
 
-        is_threat = closest_dist <= self.threat_dist
-
         control = None
         inputs = {}
 
+        # This controller uses two separate fuzzy systems:
+        # If the ship is currently too near an asteroid, then the fuzzy system for evasion is used.
+        # If the ship is not in immediate danger, then the fuzzy system for target tracking and shooting is used.
+
+        is_threat = closest_dist <= self.threat_dist
+
         if is_threat:
-            a_angle = self.ast_delta(ship_state, a_closest_wrapped['aster']['position'], game_state['map_size'])
+            a_angle = self.ast_delta(ship_state, a_closest_wrapped['aster']['position'], game_state['map_size'], True)
             
             control = self.evade_control
             inputs = {
@@ -156,14 +158,14 @@ class FSController(KesslerController):
         elif turn_rate <= -180:
             turn_rate = -180
         
-        fire = sim.output['fire'] >= 0 # if not is_threat else False
-        # print(is_threat)
-        # print(f"CA: {ca}, TA: {target_angle}, CT: {coll_time} -> thrust: {thrust}, turn_rate: {turn_rate}, fire: {fire}")
+        fire = sim.output['fire'] >= 0
 
         self.eval_frames +=1
 
         return thrust, turn_rate, fire
     
+    # calculates the asteroid position relative to ship position.
+    # wrap: whether or not to consider screen wrapping in calculation.
     def rel_asteroid_pos(self, ship_pos, asteroid_pos, map_size, wrap=False):    
         sx, sy = ship_pos
         ax, ay = asteroid_pos
@@ -177,6 +179,7 @@ class FSController(KesslerController):
         x2, y2 = ax - sx - w, ay - sy - h
         return x1 if abs(x1) < abs(x2) else x2, y1 if abs(y1) < abs(y2) else y2
         
+    # get the n closest asteroids from the ship (considering wrap/no wrap).
     def get_closest_n_asteroids(self, ship_state, game_state, n, wrap):
         ship_pos = ship_state['position']
         map_size = game_state['map_size']
@@ -184,7 +187,7 @@ class FSController(KesslerController):
             rx, ry = self.rel_asteroid_pos(ship_pos, a_pos, map_size, wrap)
             return math.sqrt(rx**2 + ry**2)
 
-        a_list = [{ 'aster': a, 'dist': rel_dist(a['position'], True) } for a in game_state['asteroids']]
+        a_list = [{ 'aster': a, 'dist': rel_dist(a['position'], wrap) } for a in game_state['asteroids']]
         return sorted(a_list, key=lambda a: a['dist'])[:n]
 
     # get smallest asteroid out of n closest asteroids.
@@ -252,8 +255,9 @@ class FSController(KesslerController):
 
         return shooting_theta
     
-    def ast_delta(self, ship_state, a_pos, map_size):
-        rel_ax, rel_ay = self.rel_asteroid_pos(ship_state["position"], a_pos, map_size)
+    # Get the angle delta from a given asteroid.
+    def ast_delta(self, ship_state, a_pos, map_size, wrap):
+        rel_ax, rel_ay = self.rel_asteroid_pos(ship_state["position"], a_pos, map_size, wrap)
         angle = (360 + math.atan2(rel_ay, rel_ax) * 180 / math.pi) % 360
 
         delta = angle - ship_state["heading"]

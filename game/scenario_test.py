@@ -5,8 +5,8 @@
 
 import time
 
-from kesslergame import Scenario, KesslerGame, GraphicsType, TrainerEnvironment
-from controller_group4 import FSController
+from kesslergame import Scenario, KesslerGame, GraphicsType
+from GA_train import get_GA_controller
 from test_controller import TestController
 from graphics_both import GraphicsBoth
 from random import randint
@@ -28,10 +28,12 @@ game_settings = {'perf_tracker': True,
                  'graphics_obj': None,
                  'frequency': 30}
 game = KesslerGame(settings=game_settings)  # Use this to visualize the game scenario
-# game = TrainerEnvironment(settings=game_settings)  # Use this for max-speed, no-graphics simulation
+
+# get the GA trained controller.
+ga_controller = get_GA_controller()
 
 pre = time.perf_counter()
-score, perf_data = game.run(scenario=my_test_scenario, controllers=[FSController(), TestController()])
+score, perf_data = game.run(scenario=my_test_scenario, controllers=[ga_controller, TestController()])
 
 print('Scenario eval time: '+str(time.perf_counter()-pre))
 print(score.stop_reason)
