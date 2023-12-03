@@ -109,6 +109,9 @@ class FSController(KesslerController):
         self.evade_control = ctrl.ControlSystem(rules_evade)
         self.target_control = ctrl.ControlSystem(rules_target)
 
+        self.evade_sim = ctrl.ControlSystemSimulation(self.evade_control, flush_after_run=1)
+        self.target_sim = ctrl.ControlSystemSimulation(self.target_control, flush_after_run=1)
+
     # convert gene [0, 1] to [min_val, max_val]
     def gene_convert(self, gene, min_val, max_val):
         return min_val + (max_val - min_val) * gene
@@ -123,41 +126,45 @@ class FSController(KesslerController):
 
         is_threat = closest_dist <= self.threat_dist
 
-        control = None
         inputs = {}
+
+        
 
         if is_threat:
             a_angle = self.ast_delta(ship_state, a_closest_wrapped['aster']['position'], game_state['map_size'])
             
-            control = self.evade_control
             inputs = {
                 'evade_delta': a_angle,
             }
+            self.evade_sim.inputs(inputs)
+            self.evade_sim.compute()
+
+            thrust = self.evade_sim.output['thrust']
+            turn_rate = self.evade_sim.output['turn_rate']
+            fire = self.evade_sim.output['fire'] >= 0 # if not is_threat else False
+
         else:
             n_closest_nowrap = self.get_closest_n_asteroids(ship_state, game_state, 3, False)
             aster = self.get_smallest_asteroid(n_closest_nowrap)
             target_angle = self.target_angle(ship_state, aster)
 
-            control = self.target_control
             inputs = {
                 'closest_dist': aster['dist'],
                 'bullet_delta': target_angle,
             }
-        sim = ctrl.ControlSystemSimulation(control, flush_after_run=1)
-        sim.inputs(inputs)
-        
-        sim.compute()
+            self.target_sim.inputs(inputs)
+            self.target_sim.compute()
 
-        thrust = sim.output['thrust']
-        turn_rate = sim.output['turn_rate']
+            thrust = self.target_sim.output['thrust']
+            turn_rate = self.target_sim.output['turn_rate']
+            fire = self.target_sim.output['fire'] >= 0 # if not is_threat else False
+
+
         if turn_rate >= 180:
             turn_rate = 180
         elif turn_rate <= -180:
             turn_rate = -180
         
-        fire = sim.output['fire'] >= 0 # if not is_threat else False
-        # print(is_threat)
-        # print(f"CA: {ca}, TA: {target_angle}, CT: {coll_time} -> thrust: {thrust}, turn_rate: {turn_rate}, fire: {fire}")
 
         self.eval_frames +=1
 
