@@ -18,11 +18,11 @@ class FSController(KesslerController):
 
         self.eval_frames = 0
 
-        angle_rng = np.arange(-180, 180, 0.01)
-        thrust_rng = np.arange(-480, 480, 0.01)
-        turn_rate_rng = np.arange(-200, 200, 0.01)
-        dist_rng = np.arange(0, 500, 0.01)
-        bool_rng = np.arange(-1, 1, 0.01)
+        angle_rng = np.arange(-180, 180, 0.05)
+        thrust_rng = np.arange(-480, 480, 0.05)
+        turn_rate_rng = np.arange(-200, 200, 0.05)
+        dist_rng = np.arange(0, 500, 0.05)
+        bool_rng = np.arange(-1, 1, 0.1)
 
         # determinant
         closest_dist = ctrl.Antecedent(dist_rng, 'closest_dist')
