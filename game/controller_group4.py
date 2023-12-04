@@ -5,7 +5,6 @@ from skfuzzy import trimf
 import numpy as np
 import math
 
-
 class FSController(KesslerController):
     def __init__(self, chromosome = None):
         
@@ -14,11 +13,11 @@ class FSController(KesslerController):
 
         self.eval_frames = 0
 
-        angle_rng = np.arange(-180, 180, 0.01)
-        thrust_rng = np.arange(-480, 480, 0.01)
-        turn_rate_rng = np.arange(-200, 200, 0.01)
-        dist_rng = np.arange(0, 500, 0.01)
-        bool_rng = np.arange(-1, 1, 0.01)
+        angle_rng = np.arange(-180, 180, 0.05)
+        thrust_rng = np.arange(-480, 480, 0.05)
+        turn_rate_rng = np.arange(-200, 200, 0.05)
+        dist_rng = np.arange(0, 500, 0.05)
+        bool_rng = np.arange(-1, 1, 0.1)
 
         # determinant
         closest_dist = ctrl.Antecedent(dist_rng, 'closest_dist')
@@ -78,9 +77,9 @@ class FSController(KesslerController):
             ctrl.Rule(evade_delta['M'], fire['H']),
             ctrl.Rule(~evade_delta['M'], fire['L']),
 
-            ctrl.Rule((evade_delta['H'] | evade_delta['L']), thrust['MH']),
-            ctrl.Rule((evade_delta['MH'] | evade_delta['ML']), thrust['ML']),
-            ctrl.Rule(evade_delta['M'], thrust['ML']),
+            ctrl.Rule((evade_delta['H'] | evade_delta['L']), thrust['H']),
+            ctrl.Rule((evade_delta['MH'] | evade_delta['ML']), thrust['L']),
+            ctrl.Rule(evade_delta['M'], thrust['L']),
             
             ctrl.Rule(evade_delta['L'], turn_rate['H']),
             ctrl.Rule(evade_delta['H'], turn_rate['L']),
@@ -120,15 +119,13 @@ class FSController(KesslerController):
         """
         Method processed each time step by this controller.
         """
-
-        [a_closest_wrapped] = self.get_closest_n_asteroids(ship_state, game_state, 1, True)
+        
+        a_closest_wrapped = self.get_closest_n_asteroids(ship_state, game_state, 1, True)[0]
         closest_dist = a_closest_wrapped['dist']
 
         is_threat = closest_dist <= self.threat_dist
 
         inputs = {}
-
-        
 
         if is_threat:
             a_angle = self.ast_delta(ship_state, a_closest_wrapped['aster']['position'], game_state['map_size'])
@@ -138,7 +135,6 @@ class FSController(KesslerController):
             }
             self.evade_sim.inputs(inputs)
             self.evade_sim.compute()
-
             thrust = self.evade_sim.output['thrust']
             turn_rate = self.evade_sim.output['turn_rate']
             fire = self.evade_sim.output['fire'] >= 0 # if not is_threat else False
@@ -190,7 +186,7 @@ class FSController(KesslerController):
             rx, ry = self.rel_asteroid_pos(ship_pos, a_pos, map_size, wrap)
             return math.sqrt(rx**2 + ry**2)
 
-        a_list = [{ 'aster': a, 'dist': rel_dist(a['position'], True) } for a in game_state['asteroids']]
+        a_list = [{ 'aster': a, 'dist': rel_dist(a['position'], wrap) } for a in game_state['asteroids']]
         return sorted(a_list, key=lambda a: a['dist'])[:n]
 
     # get smallest asteroid out of n closest asteroids.
@@ -258,8 +254,8 @@ class FSController(KesslerController):
 
         return shooting_theta
     
-    def ast_delta(self, ship_state, a_pos, map_size):
-        rel_ax, rel_ay = self.rel_asteroid_pos(ship_state["position"], a_pos, map_size)
+    def ast_delta(self, ship_state, a_pos, map_size, wrap=True):
+        rel_ax, rel_ay = self.rel_asteroid_pos(ship_state["position"], a_pos, map_size, wrap=wrap)
         angle = (360 + math.atan2(rel_ay, rel_ax) * 180 / math.pi) % 360
 
         delta = angle - ship_state["heading"]
