@@ -4,6 +4,8 @@ Our group's submission consists of 3 separate files:
     FSController() will use the default chromosome (which is the best chromosome from our own training);
     FSController(chromosome) will use a given chromosome to initialize itself.
 
+    Notice: EasyGA package is required for running this controller
+
 - GA_train.py:
     This contains the training sequence for FSController.
     In particular, get_GA_controller() will:
